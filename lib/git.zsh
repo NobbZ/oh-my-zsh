@@ -59,10 +59,34 @@ git_remote_status() {
     fi
 }
 
-# Checks if there are commits ahead from remote
+# Gets the number of commits ahead from remote
+function git_commits_ahead() {
+  if $(echo "$(command git log @{upstream}..HEAD 2> /dev/null)" | grep '^commit' &> /dev/null); then
+    COMMITS=$(command git log @{upstream}..HEAD | grep '^commit' | wc -l | tr -d ' ')
+    echo "$ZSH_THEME_GIT_COMMITS_AHEAD_PREFIX$COMMITS$ZSH_THEME_GIT_COMMITS_AHEAD_SUFFIX"
+  fi
+}
+
+# Outputs if current branch is ahead of remote
 function git_prompt_ahead() {
-  if $(echo "$(command git log origin/$(current_branch)..HEAD 2> /dev/null)" | grep '^commit' &> /dev/null); then
+  if [[ -n "$(command git rev-list origin/$(current_branch)..HEAD 2> /dev/null)" ]]; then
     echo "$ZSH_THEME_GIT_PROMPT_AHEAD"
+  fi
+}
+
+# Outputs if current branch is behind remote
+function git_prompt_behind() {
+  if [[ -n "$(command git rev-list HEAD..origin/$(current_branch) 2> /dev/null)" ]]; then
+    echo "$ZSH_THEME_GIT_PROMPT_BEHIND"
+  fi
+}
+
+# Outputs if current branch exists on remote or not
+function git_prompt_remote() {
+  if [[ -n "$(command git show-ref origin/$(current_branch) 2> /dev/null)" ]]; then
+    echo "$ZSH_THEME_GIT_PROMPT_REMOTE_EXISTS"
+  else
+    echo "$ZSH_THEME_GIT_PROMPT_REMOTE_MISSING"
   fi
 }
 
@@ -150,5 +174,3 @@ function git_compare_version() {
 POST_1_7_2_GIT=$(git_compare_version "1.7.2")
 #clean up the namespace slightly by removing the checker function
 unset -f git_compare_version
-
-
